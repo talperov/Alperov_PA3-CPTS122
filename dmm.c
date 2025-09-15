@@ -347,40 +347,60 @@ int load_music_data(Node** pHead)
         return 0;
     }
 
-    char line[256];
+    char record[200];
+    Record song;
 
-    while (fgets(line, sizeof(line), infile) != NULL)
+    while (fgets(record, sizeof(record), infile))
     {
-        Record song;
+        // Remove newline at the end
+        record[strcspn(record, "\n")] = 0;
+
+        char* ptr = record;
         char* token;
 
-        // Remove newline at end
-        line[strcspn(line, "\n")] = 0;
-
-        // Handle artist (with optional quotes)
-        if (line[0] == '"')
+        // Parse artist (quoted or unquoted)
+        if (*ptr == '"')
         {
-            token = strtok(line, "\"");
-            if (token != NULL)
+            ptr++; // skip initial quote
+            char* end_quote = strchr(ptr, '"');
+            if (end_quote)
             {
-                strcpy(song.artist, token);
+                int len = (int)(end_quote - ptr);
+
+                strncpy(song.artist, ptr, len);
+
+                song.artist[len] = '\0';
+
+                ptr = end_quote + 2; // skip quote and comma
             }
-            strtok(NULL, ","); // Skip comma after quotes
+            else
+            {
+                strcpy(song.artist, ""); // fallback
+            }
         }
         else
         {
-            token = strtok(line, ",");
+            token = strtok(ptr, ",");
             if (token != NULL)
             {
                 strcpy(song.artist, token);
             }
+            else
+            {
+                strcpy(song.artist, "");
+            }
+            ptr = NULL; // for subsequent strtok calls
         }
 
         // Album title
-        token = strtok(NULL, ",");
+        token = strtok(ptr, ",");
         if (token != NULL)
         {
             strcpy(song.album_title, token);
+        }
+        else
+        {
+            strcpy(song.album_title, "");
         }
 
         // Song title
@@ -389,6 +409,10 @@ int load_music_data(Node** pHead)
         {
             strcpy(song.song_title, token);
         }
+        else
+        {
+            strcpy(song.song_title, "");
+        }
 
         // Genre
         token = strtok(NULL, ",");
@@ -396,17 +420,32 @@ int load_music_data(Node** pHead)
         {
             strcpy(song.genre, token);
         }
+        else
+        {
+            strcpy(song.genre, "");
+        }
 
         // Duration (minutes:seconds)
-        token = strtok(NULL, ":");
-        if (token != NULL)
-        {
-            song.song_length.minutes = atoi(token);
-        }
         token = strtok(NULL, ",");
         if (token != NULL)
         {
-            song.song_length.seconds = atoi(token);
+            char* colon = strchr(token, ':');
+            if (colon != NULL)
+            {
+                *colon = '\0';
+                song.song_length.minutes = atoi(token);
+                song.song_length.seconds = atoi(colon + 1);
+            }
+            else
+            {
+                song.song_length.minutes = 0;
+                song.song_length.seconds = 0;
+            }
+        }
+        else
+        {
+            song.song_length.minutes = 0;
+            song.song_length.seconds = 0;
         }
 
         // Times played
@@ -415,6 +454,10 @@ int load_music_data(Node** pHead)
         {
             song.times_played = atoi(token);
         }
+        else
+        {
+            song.times_played = 0;
+        }
 
         // Rating
         token = strtok(NULL, ",");
@@ -422,11 +465,16 @@ int load_music_data(Node** pHead)
         {
             song.rating = atoi(token);
         }
+        else
+        {
+            song.rating = 0;
+        }
 
-        // Insert the song at the front
+        // Insert at the front of the list
         insertFront(pHead, song);
     }
 
     fclose(infile);
     return 1;
 }
+
