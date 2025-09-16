@@ -84,6 +84,147 @@ void freeList(Node* pHead)
     }
 }
 
+// Load music data from CSV into list (beginner-friendly)
+int load_music_data(Node** pHead)
+{
+    FILE* infile = fopen("musicPlayList.csv", "r");
+    if (infile == NULL)
+    {
+        printf("Failed to open the file.\n");
+        return 0;
+    }
+
+    char record[200];
+    Record song;
+
+    while (fgets(record, sizeof(record), infile))
+    {
+        // Remove newline at the end
+        record[strcspn(record, "\n")] = 0;
+
+        char* ptr = record;
+        char* token;
+
+        // Parse artist (quoted or unquoted)
+        if (*ptr == '"')
+        {
+            ptr++; // skip initial quote
+            char* end_quote = strchr(ptr, '"');
+            if (end_quote)
+            {
+                int len = (int)(end_quote - ptr);
+
+                strncpy(song.artist, ptr, len);
+
+                song.artist[len] = '\0';
+
+                ptr = end_quote + 2; // skip quote and comma
+            }
+            else
+            {
+                strcpy(song.artist, ""); // fallback
+            }
+        }
+        else
+        {
+            token = strtok(ptr, ",");
+            if (token != NULL)
+            {
+                strcpy(song.artist, token);
+            }
+            else
+            {
+                strcpy(song.artist, "");
+            }
+            ptr = NULL; // for subsequent strtok calls
+        }
+
+        // Album title
+        token = strtok(ptr, ",");
+        if (token != NULL)
+        {
+            strcpy(song.album_title, token);
+        }
+        else
+        {
+            strcpy(song.album_title, "");
+        }
+
+        // Song title
+        token = strtok(NULL, ",");
+        if (token != NULL)
+        {
+            strcpy(song.song_title, token);
+        }
+        else
+        {
+            strcpy(song.song_title, "");
+        }
+
+        // Genre
+        token = strtok(NULL, ",");
+        if (token != NULL)
+        {
+            strcpy(song.genre, token);
+        }
+        else
+        {
+            strcpy(song.genre, "");
+        }
+
+        // Duration (minutes:seconds)
+        token = strtok(NULL, ",");
+        if (token != NULL)
+        {
+            char* colon = strchr(token, ':');
+            if (colon != NULL)
+            {
+                *colon = '\0';
+                song.song_length.minutes = atoi(token);
+                song.song_length.seconds = atoi(colon + 1);
+            }
+            else
+            {
+                song.song_length.minutes = 0;
+                song.song_length.seconds = 0;
+            }
+        }
+        else
+        {
+            song.song_length.minutes = 0;
+            song.song_length.seconds = 0;
+        }
+
+        // Times played
+        token = strtok(NULL, ",");
+        if (token != NULL)
+        {
+            song.times_played = atoi(token);
+        }
+        else
+        {
+            song.times_played = 0;
+        }
+
+        // Rating
+        token = strtok(NULL, ",");
+        if (token != NULL)
+        {
+            song.rating = atoi(token);
+        }
+        else
+        {
+            song.rating = 0;
+        }
+
+        // Insert at the front of the list
+        insertFront(pHead, song);
+    }
+
+    fclose(infile);
+    return 1;
+}
+
 // Stores the music data to a CSV file
 int store_music_data(Node* pHead)
 {
@@ -337,144 +478,289 @@ void exit_command(Node* pHead)
     printf("Exiting Program. . .\n");
 }
 
-// Load music data from CSV into list (beginner-friendly)
-int load_music_data(Node** pHead)
+// EVERYTHING ELSE BELOW IS PART 2 of PA2 AKA PA3 assingment
+
+void insert_command(Node** pHead) // Command that inserts a new song into DMM
 {
-    FILE* infile = fopen("musicPlayList.csv", "r");
-    if (infile == NULL)
+    Record newSong;
+
+    printf("Enter the Artist name: ");
+    scanf("%s", newSong.artist);
+
+    printf("Enter the Album title: ");
+    scanf("%s", newSong.album_title);
+
+    printf("Enter the Song title: ");
+    scanf("%s", newSong.song_title);
+
+    printf("Enter the Genre: ");
+    scanf("%s", newSong.genre);
+
+    printf("Enter the amount of times played: ");
+    scanf("%d", &newSong.times_played);
+
+    // Validate rating between 1–5
+    do
     {
-        printf("Failed to open the file.\n");
+        printf("Enter the rating (1-5): ");
+        scanf("%d", &newSong.rating);
+    } while (newSong.rating < 1 || newSong.rating > 5);
+
+    printf("Enter song length (minutes seconds): ");
+    scanf("%d %d", &newSong.song_length.minutes, &newSong.song_length.seconds);
+
+    // Insert at front using your insertFront function
+    insertFront(pHead, newSong);
+
+    printf("\nNew Information Loaded!\n");
+    printf("Artist: %s\n", newSong.artist);
+    printf("Song: %s\n", newSong.song_title);
+    printf("Album: %s\n", newSong.album_title);
+    printf("Genre: %s\n", newSong.genre);
+    printf("Duration: %d:%02d\n", newSong.song_length.minutes, newSong.song_length.seconds);
+    printf("Rating: %d\n", newSong.rating);
+    printf("Times Played: %d\n\n", newSong.times_played);
+}
+
+void delete_command(Node** pHead)  // Command that deletes a song from the list that user requests
+{
+    if (*pHead == NULL)
+    {
+        printf("Playlist is empty. Nothing to delete.\n");
+        return;
+    }
+
+    printf("\nCurrent Playlist:\n");
+
+    printList(*pHead); // Show all songs so user can choose
+
+    char title[60];
+    printf("Enter the song title to delete: ");
+    scanf("%s", title);
+
+    Node* pCur = *pHead;
+
+    while (pCur != NULL)
+    {
+        if (strcmp(pCur->data.song_title, title) == 0)
+        {
+            // Case: deleting the head
+            if (pCur == *pHead)
+            {
+                *pHead = pCur->next;
+            }
+
+            // Re-link neighbors
+            if (pCur->prev != NULL)
+            {
+                pCur->prev->next = pCur->next;
+            }
+            if (pCur->next != NULL)
+            {
+                pCur->next->prev = pCur->prev;
+            }
+
+            free(pCur);
+
+            printf("\nSong \"%s\" deleted successfully!\n", title);
+
+            if (*pHead == NULL)
+            {
+                printf("Playlist is now empty.\n");
+            }
+
+            return;
+        }
+        pCur = pCur->next;
+    }
+
+    printf("\nSong \"%s\" not found in playlist.\n", title);
+}
+
+int sort_command(Node* pHead) // Ask user which sorting style they would like
+{
+    int pick = 0;
+
+    if (pHead == NULL)
+    {
+        printf("No sorting, playlist is empty!\n");
         return 0;
     }
 
-    char record[200];
-    Record song;
+    printf("Sorting Options are listed below!\n");
+    printf("1. Sorting by Artist\n");
+    printf("2. Sorting by Album\n");
+    printf("3. Sorting by Rating\n");
+    printf("4. Sorting by Times Played\n");
+    printf("Enter your pick: \n");
+    scanf("%d", &pick);
 
-    while (fgets(record, sizeof(record), infile))
+    switch (pick)
     {
-        // Remove newline at the end
-        record[strcspn(record, "\n")] = 0;
+    case 1:
+        sort_by_artist(pHead);
+        break;
+    case 2:
+        sort_by_album(pHead);
 
-        char* ptr = record;
-        char* token;
+        break;
+    case 3: 
+        sort_by_rating(pHead);
 
-        // Parse artist (quoted or unquoted)
-        if (*ptr == '"')
+        break;
+    case 4: 
+        sort_by_times_played(pHead);
+
+        break;
+    default:
+        puts("Cancelling . . . .");
+        return 0;
+    }
+    printf("Sorting completed!\n");
+    return pick;
+}
+
+void sort_by_artist(Node* pHead) // Sorts the stying by artist A-Z
+{
+    if (pHead == NULL)
+    {
+        printf("No sorting, playlist is empty!\n");
+        return;
+    }
+    int swap = 0;
+    Node* pCur;
+    Node* last = NULL;
+
+    do
+    {
+        swap = 0;
+        pCur = pHead;
+        
+        while (pCur->next != last)
         {
-            ptr++; // skip initial quote
-            char* end_quote = strchr(ptr, '"');
-            if (end_quote)
+            if (strcmp(pCur->data.artist, pCur->next->data.artist) > 0)
             {
-                int len = (int)(end_quote - ptr);
+                Record temp = pCur->data;
+                pCur->data = pCur->next->data;
+                pCur->next->data = temp;
 
-                strncpy(song.artist, ptr, len);
-
-                song.artist[len] = '\0';
-
-                ptr = end_quote + 2; // skip quote and comma
+                swap = 1;
             }
-            else
-            {
-                strcpy(song.artist, ""); // fallback
-            }
+            pCur = pCur->next;
         }
-        else
-        {
-            token = strtok(ptr, ",");
-            if (token != NULL)
-            {
-                strcpy(song.artist, token);
-            }
-            else
-            {
-                strcpy(song.artist, "");
-            }
-            ptr = NULL; // for subsequent strtok calls
-        }
+        last = pCur;
+    } while (swap);
+    printf("Playlist has been sorted.\n");
+} 
 
-        // Album title
-        token = strtok(ptr, ",");
-        if (token != NULL)
-        {
-            strcpy(song.album_title, token);
-        }
-        else
-        {
-            strcpy(song.album_title, "");
-        }
 
-        // Song title
-        token = strtok(NULL, ",");
-        if (token != NULL)
-        {
-            strcpy(song.song_title, token);
-        }
-        else
-        {
-            strcpy(song.song_title, "");
-        }
-
-        // Genre
-        token = strtok(NULL, ",");
-        if (token != NULL)
-        {
-            strcpy(song.genre, token);
-        }
-        else
-        {
-            strcpy(song.genre, "");
-        }
-
-        // Duration (minutes:seconds)
-        token = strtok(NULL, ",");
-        if (token != NULL)
-        {
-            char* colon = strchr(token, ':');
-            if (colon != NULL)
-            {
-                *colon = '\0';
-                song.song_length.minutes = atoi(token);
-                song.song_length.seconds = atoi(colon + 1);
-            }
-            else
-            {
-                song.song_length.minutes = 0;
-                song.song_length.seconds = 0;
-            }
-        }
-        else
-        {
-            song.song_length.minutes = 0;
-            song.song_length.seconds = 0;
-        }
-
-        // Times played
-        token = strtok(NULL, ",");
-        if (token != NULL)
-        {
-            song.times_played = atoi(token);
-        }
-        else
-        {
-            song.times_played = 0;
-        }
-
-        // Rating
-        token = strtok(NULL, ",");
-        if (token != NULL)
-        {
-            song.rating = atoi(token);
-        }
-        else
-        {
-            song.rating = 0;
-        }
-
-        // Insert at the front of the list
-        insertFront(pHead, song);
+void sort_by_album(Node* pHead) // Sort by Album Title (A-Z)
+{
+    if (pHead == NULL)
+    {
+        printf("Playlist is empty. Nothing to sort.\n");
+        return;
     }
 
-    fclose(infile);
-    return 1;
+    int swap;
+    Node* pCur;
+    Node* last = NULL;
+
+    do
+    {
+        swap = 0;
+        pCur = pHead;
+
+        while (pCur->next != last)
+        {
+            if (strcmp(pCur->data.album_title, pCur->next->data.album_title) > 0)
+            {
+                // Inline swap
+                Record temp = pCur->data;
+                pCur->data = pCur->next->data;
+                pCur->next->data = temp;
+
+                swap = 1;
+            }
+            pCur = pCur->next;
+        }
+        last = pCur;
+    } while (swap);
+
+    printf("Playlist sorted by album title (A-Z).\n");
 }
+
+
+void sort_by_rating(Node* pHead) // Sort by Rating (1-5 ascending)
+{
+    if (pHead == NULL)
+    {
+        printf("Playlist is empty. Nothing to sort.\n");
+        return;
+    }
+
+    int swap;
+    Node* pCur;
+    Node* last = NULL;
+
+    do
+    {
+        swap = 0;
+        pCur = pHead;
+
+        while (pCur->next != last)
+        {
+            if (pCur->data.rating > pCur->next->data.rating)
+            {
+                // Inline swap
+                Record temp = pCur->data;
+                pCur->data = pCur->next->data;
+                pCur->next->data = temp;
+
+                swap = 1;
+            }
+            pCur = pCur->next;
+        }
+        last = pCur;
+    } while (swap);
+
+    printf("Playlist sorted by rating (1-5).\n");
+}
+
+
+void sort_by_times_played(Node* pHead) // Sort by Times Played (largest first)
+{
+    if (pHead == NULL)
+    {
+        printf("Playlist is empty. Nothing to sort.\n");
+        return;
+    }
+
+    int swap;
+    Node* pCur;
+    Node* last = NULL;
+
+    do
+    {
+        swap = 0;
+        pCur = pHead;
+
+        while (pCur->next != last)
+        {
+            if (pCur->data.times_played < pCur->next->data.times_played) 
+            {
+                Record temp = pCur->data;
+                pCur->data = pCur->next->data;
+                pCur->next->data = temp;
+
+                swap = 1;
+            }
+            pCur = pCur->next;
+        }
+        last = pCur;
+    } while (swap);
+
+    printf("Playlist sorted by times played (largest first).\n");
+}
+
 
