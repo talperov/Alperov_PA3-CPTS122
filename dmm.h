@@ -72,5 +72,22 @@ void play_command(Node* pHead); // Function that plays everything together.
 
 void exit_command(Node* pHead); // Simply just exits out the function when user requests
 
+// EVERYTHING ELSE BELOW IS PART 2 of PA2 AKA PA3 assingment
+
+void insert_command(Node** pHead); // Command that inserts a new song that a user wants to put in DMM
+
+void delete_command(Node** pHead); // Command that deletes a song from the list that user requests
+
+int sort_command(Node* pHead); // Ask user which sorting style they would like
+
+void sort_by_artist(Node* pHead); // Sorts the stying by artist A-Z
+
+void sort_by_album(Node* pHead); // Sort by Album Title (A-Z)
+
+void sort_by_rating(Node* pHead); // Sort by Rating (1-5 ascending)
+
+void sort_by_times_played(Node* pHead); // Sort by Times Played (largest first)
+
 
 #endif
+
