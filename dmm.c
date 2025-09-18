@@ -604,11 +604,11 @@ int sort_command(Node* pHead) // Ask user which sorting style they would like
         sort_by_album(pHead);
 
         break;
-    case 3: 
+    case 3:
         sort_by_rating(pHead);
 
         break;
-    case 4: 
+    case 4:
         sort_by_times_played(pHead);
 
         break;
@@ -635,7 +635,7 @@ void sort_by_artist(Node* pHead) // Sorts the stying by artist A-Z
     {
         swap = 0;
         pCur = pHead;
-        
+
         while (pCur->next != last)
         {
             if (strcmp(pCur->data.artist, pCur->next->data.artist) > 0)
@@ -651,7 +651,7 @@ void sort_by_artist(Node* pHead) // Sorts the stying by artist A-Z
         last = pCur;
     } while (swap);
     printf("Playlist has been sorted.\n");
-} 
+}
 
 
 void sort_by_album(Node* pHead) // Sort by Album Title (A-Z)
@@ -747,7 +747,7 @@ void sort_by_times_played(Node* pHead) // Sort by Times Played (largest first)
 
         while (pCur->next != last)
         {
-            if (pCur->data.times_played < pCur->next->data.times_played) 
+            if (pCur->data.times_played < pCur->next->data.times_played)
             {
                 Record temp = pCur->data;
                 pCur->data = pCur->next->data;
@@ -761,6 +761,64 @@ void sort_by_times_played(Node* pHead) // Sort by Times Played (largest first)
     } while (swap);
 
     printf("Playlist sorted by times played (largest first).\n");
+}
+
+void shuffle_command(Node* pHead) // Shuffles the playlist in randomized order
+{
+    Node* pCur;
+    int size = 0, count, flag;
+    int record[100] = { 0 };
+    
+    pCur = pHead;
+    while (pCur != NULL)
+    {
+        size++;
+        pCur = pCur->next;
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        do
+        {
+            flag = 0;
+            record[i] = rand() % size + 1;
+
+            for (int j = 0; j < i; j++)
+            {
+                if (record[j] == record[i])
+                {
+                    flag = 1;
+                    break;
+                }
+            }
+        } while (flag == 1);
+    }
+    for (int i = 0; i < size; i++)
+    {
+        pCur = pHead;
+        count = 1;
+
+        while (count < record[i])
+        {
+            pCur = pCur->next;
+            count++;
+        }
+
+        system("cls");
+
+        printf("Playing music now!\n");
+        printf("%d Song from Shuffle: %d\n", i + 1, record[i]);
+        printf("Artist: %s\n", pCur->data.artist);
+        printf("Album: %s\n", pCur->data.album_title);
+        printf("Song: %s\n", pCur->data.song_title);
+        printf("Genre: %s\n", pCur->data.genre);
+        printf("Times Played: %d\n", pCur->data.times_played);
+        printf("Duration: %d:%02d\n", pCur->data.song_length.minutes, pCur->data.song_length.seconds);
+        printf("Rating: %d\n\n", pCur->data.rating);
+
+        pCur->data.times_played++;
+    }
+    printf("All songs played in shuffle.\n");
 }
 
 
