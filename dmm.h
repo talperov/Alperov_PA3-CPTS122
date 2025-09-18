@@ -12,9 +12,11 @@ requirments.
 #define DMM_H
 
 #define _CRT_SECURE_NO_WARNINGS
+#include "testFunctions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 
 typedef struct duration // struct for Duration of music
@@ -88,6 +90,9 @@ void sort_by_rating(Node* pHead); // Sort by Rating (1-5 ascending)
 
 void sort_by_times_played(Node* pHead); // Sort by Times Played (largest first)
 
+void shuffle_command(Node* pHead); // Shuffles the playlist in randomized order
+
 
 #endif
+
 
