@@ -11,8 +11,11 @@ requirements.
 
 #include "dmm.h"
 
+
 int main(void)
+
 {
+    srand((unsigned int)time(NULL));   
     Node* pHead = NULL;
     int choice = 0;
 
@@ -25,9 +28,9 @@ int main(void)
         printf("4. Edit\n");
         printf("5. Rate\n");
         printf("6. Play\n");
-        printf("7. Exit\n");
+        printf("7. Shuffle\n");
+        printf("8. Exit\n");
         printf("Enter your choice: ");
-        //IMPLEMENT THE OTHER CHOICES
         scanf("%d", &choice);
         getchar();
 
@@ -71,16 +74,21 @@ int main(void)
         }
         else if (choice == 7)
         {
-            exit_command(pHead);
+            shuffle_command(pHead);
+        }
+        else if (choice == 8)
+        {
+            exit_command(pHead);    
         }
         else
         {
-            printf("Invalid choice! Please select 1-7.\n");
+            printf("Invalid choice! Please select 1-8.\n");
         }
 
-    } while (choice != 7);
+    } while (choice != 8);
 
     freeList(pHead);
 
     return 0;
 }
+
